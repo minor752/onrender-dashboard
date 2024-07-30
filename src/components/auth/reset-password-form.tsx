@@ -15,11 +15,11 @@ import { z as zod } from 'zod';
 
 import { authClient } from '@/lib/auth/client';
 
-const schema = zod.object({ email: zod.string().min(1, { message: 'Email is required' }).email() });
+const schema = zod.object({ login: zod.string().min(1, { message: 'Login is required' }) });
 
 type Values = zod.infer<typeof schema>;
 
-const defaultValues = { email: '' } satisfies Values;
+const defaultValues = { login: '' } satisfies Values;
 
 export function ResetPasswordForm(): React.JSX.Element {
   const [isPending, setIsPending] = React.useState<boolean>(false);
