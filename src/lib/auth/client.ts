@@ -1,6 +1,12 @@
 'use client';
 
+import { redirect } from 'next/navigation';
+import { useRouter } from 'next/router';
+
 import type { User } from '@/types/user';
+import { paths } from '@/paths';
+
+import axiosInstance from '../axiosInstance';
 
 function generateToken(): string {
   const arr = new Uint8Array(12);
@@ -28,12 +34,12 @@ export interface SignInWithOAuthParams {
 }
 
 export interface SignInWithPasswordParams {
-  email: string;
+  login: string;
   password: string;
 }
 
 export interface ResetPasswordParams {
-  email: string;
+  login: string;
 }
 
 class AuthClient {
@@ -51,28 +57,36 @@ class AuthClient {
     return { error: 'Social authentication not implemented' };
   }
 
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    const { email, password } = params;
+  async signInWithPassword(params: SignInWithPasswordParams) {
+    // : Promise<{ error?: string }>
+    const { login, password } = params;
 
     // Make API request
+    // 
 
     // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+    if (login !== 'Baxodir' || password !== 'baxodir!@#') {
+      return { error: 'Неверные учетные данные' };
     }
 
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
+    const response = await axiosInstance.post('/login/', { username: login, password }); // Replace with your API endpoint
 
-    return {};
+    if (response.status === 200) {
+      const token = generateToken();
+      localStorage.setItem('custom-auth-token', token);
+
+      console.log(response.data);
+    }
+
+    return { response };
   }
 
   async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Password reset not implemented' };
+    return { error: 'Сброс пароля не реализован' };
   }
 
   async updatePassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Update reset not implemented' };
+    return { error: 'Сброс обновления не реализован' };
   }
 
   async getUser(): Promise<{ data?: User | null; error?: string }> {
