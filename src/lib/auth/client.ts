@@ -8,7 +8,7 @@ import { paths } from '@/paths';
 
 import axiosInstance from '../axiosInstance';
 
-function generateToken(): string {
+export function generateToken(): string {
   const arr = new Uint8Array(12);
   window.crypto.getRandomValues(arr);
   return Array.from(arr, (v) => v.toString(16).padStart(2, '0')).join('');
@@ -58,27 +58,11 @@ class AuthClient {
   }
 
   async signInWithPassword(params: SignInWithPasswordParams) {
-    // : Promise<{ error?: string }>
     const { login, password } = params;
 
-    // Make API request
-    // 
+    const { data, status } = await axiosInstance.post('/login/', { username: login, password }); // Replace with your API endpoint
 
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (login !== 'Baxodir' || password !== 'baxodir!@#') {
-      return { error: 'Неверные учетные данные' };
-    }
-
-    const response = await axiosInstance.post('/login/', { username: login, password }); // Replace with your API endpoint
-
-    if (response.status === 200) {
-      const token = generateToken();
-      localStorage.setItem('custom-auth-token', token);
-
-      console.log(response.data);
-    }
-
-    return { response };
+    return { data, status };
   }
 
   async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {

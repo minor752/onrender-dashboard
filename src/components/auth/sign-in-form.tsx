@@ -15,21 +15,25 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Eye as EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 import { EyeSlash as EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
+import { AxiosError } from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
 
 import { paths } from '@/paths';
-import { authClient } from '@/lib/auth/client';
+import { authClient, generateToken } from '@/lib/auth/client';
+import axiosInstance from '@/lib/axiosInstance';
 import { useUser } from '@/hooks/use-user';
 
 const schema = zod.object({
-  login: zod.string().min(1, { message: 'Login is required' }),
+  username: zod.string().min(1, { message: 'Login is required' }),
   password: zod.string().min(1, { message: 'Password is required' }),
 });
 
 type Values = zod.infer<typeof schema>;
 
-const defaultValues = { login: 'Baxodir', password: 'baxodir!@#' } satisfies Values;
+const defaultValues = { username: '', password: '' } satisfies Values;
+// Baxodir
+// baxodir!@#
 
 export function SignInForm(): React.JSX.Element {
   const router = useRouter();
@@ -49,26 +53,29 @@ export function SignInForm(): React.JSX.Element {
 
   const onSubmit = React.useCallback(
     async (values: Values): Promise<void> => {
-      setIsPending(true);
+      try {
+        setIsPending(true);
 
-      const { error, response } = await authClient.signInWithPassword(values);
+        const { data, status } = await axiosInstance.post('/login/', values);
 
-      if (error) {
-        setError('root', { type: 'server', message: error });
+        if (status === 200) {
+          const token = generateToken();
+          localStorage.setItem('custom-auth-token', token);
+          router.replace(paths.dashboard.overview);
+        }
+
+        // Refresh the auth state
+        await checkSession?.();
+
+        // UserProvider, for this case, will not refresh the router
+        // After refresh, GuestGuard will handle the redirect
+        router.refresh();
+      } catch ({ response }: any) {
         setIsPending(false);
-        return;
+        setError('root', { type: 'setValueAs', message: response.data?.detail });
+
+        console.log(response);
       }
-
-      if (response?.status === 200) {
-        router.replace(paths.dashboard.overview);
-      }
-
-      // Refresh the auth state
-      await checkSession?.();
-
-      // UserProvider, for this case, will not refresh the router
-      // After refresh, GuestGuard will handle the redirect
-      router.refresh();
     },
     [checkSession, router, setError]
   );
@@ -79,12 +86,12 @@ export function SignInForm(): React.JSX.Element {
         <Stack spacing={2}>
           <Controller
             control={control}
-            name="login"
+            name="username"
             render={({ field }) => (
-              <FormControl error={Boolean(errors.login)}>
-                <InputLabel>Login</InputLabel>
-                <OutlinedInput {...field} label="Login" />
-                {errors.login ? <FormHelperText>{errors.login.message}</FormHelperText> : null}
+              <FormControl error={Boolean(errors.username)}>
+                <InputLabel>Username</InputLabel>
+                <OutlinedInput {...field} label="Username" />
+                {errors.username ? <FormHelperText>{errors.username.message}</FormHelperText> : null}
               </FormControl>
             )}
           />
